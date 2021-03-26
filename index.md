@@ -207,13 +207,13 @@ There are two main regimes for the training of this system.
 After these two are done, the system is decomposed to its core components, and a subset of them are used during [deployment](#deployment).
 
 ### Model Learning
-In this stage of learning, we first train the SE using the dataset. Training to completion may not be too beneficial, but this remains to be seen. Regardless, some pre-training is required to allow the RSSM to have reasonable latent space variables to regress to, which is done right after the SE is trained/half-trained. A figure depicting this step of the training regime is shown here:
+In this stage of learning, we first train the SE using the dataset. Training to completion may not be too beneficial, but this remains to be seen. Regardless, some pre-training is required to allow the RSSM to have reasonable latent space variables to regress to, which is done right after the SE is trained/half-trained. A figure depicting this step of the training regime is shown here (dotted lines represent KL loss, or a loss function between two distributions):
 
 ![RSSM SE training](RSSM%20SE%20training.png)
 ****
 
 ### Agent Learning
-Once the world model is suitably learned, it can then be used to train the reinforcement learning agent. This is much more efficient because now, the state of the world is encoded in a compressed form, and performing computations on this compressed state representation accelerates **learning** by allowing training to be done in very large batch sizes. To train, we simply encode a state $s_i$ at a time $t$ using the encoder, and then use the RSSM to perform rollouts given actions from the actor critic model. These rollouts can be performed in the field of 5 seconds to prevent the RSSM from accumulating errors and venturing into unrepresented areas of the state space. Given that the dataset is full of state data, we can then randomly sample the initial image from the dataset, and then perform rollouts on each image. This is graphically represented as:
+Once the world model is suitably learned, it can then be used to train the reinforcement learning agent. This is much more efficient because now, the state of the world is encoded in a compressed form, and performing computations on this compressed state representation accelerates learning by allowing training to be done in very large batch sizes. To train, we simply encode a state $s_i$ at a time $t$ using the encoder, and then use the RSSM to perform rollouts given actions from the actor critic model. These rollouts can be performed in the field of 5 seconds to prevent the RSSM from accumulating errors and venturing into unrepresented areas of the state space. Given that the dataset is full of state data, we can then randomly sample the initial image from the dataset, and then perform rollouts on each image. This is graphically represented as:
 
 ![AC learning](AC%20learning.png)
 
