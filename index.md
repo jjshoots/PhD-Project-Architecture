@@ -74,6 +74,8 @@ There are two core purposes of the computer vision model. The first is to predic
 
 ![Maintenance Model](Maintenance%20Model.png)
 
+> Correction: In the above image, the outputs from the network are flipped; detections should be above, and $\hat{q}$ should be below.
+
 ### Maintenance Requirements
 Some of the maintenance requirements taken from literature include the following:
 - **Railway**
