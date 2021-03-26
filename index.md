@@ -160,7 +160,7 @@ The RSSM's main goal is to predict the next state and reward given the current s
 The AC model will arguably be the most touchy component of the whole system architecture, but its core concept is the easiest to understand. The base idea is to have the actor produce a distribution over the action space of the most likely action that will maximize the expected sum of future discounted rewards. Ie:
 
 $$
-  \max_\theta \mathbb{E}_{z_i \sim c(z_{i-1}, \hat{a}), \hat{a} \sim \pi_\theta(\bullet | z)} V_i \\
+  \max_\theta \mathbb{E}_{z_i \sim c(\bullet | z_{i-1}, \hat{a}), \hat{a} \sim \pi_\theta(\bullet | z)} V_i \\
   V_i = \sum_{t=i}^{T} \gamma^{t-i} r_t
 $$
 
@@ -213,7 +213,7 @@ In this stage of learning, we first train the SE using the dataset. Training to 
 ****
 
 ### Agent Learning
-Once the world model is suitably learned, it can then be used to train the reinforcement learning agent. This is much more efficient because now, the state of the world is encoded in a compressed form, and performing computations on this compressed state representation accelerates learning by allowing training to be done in very large batch sizes. To train, we simply encode a state $s_i$ at a time $t$ using the encoder, and then use the RSSM to perform rollouts given actions from the actor critic model. These rollouts can be performed in the field of 5 seconds to prevent the RSSM from accumulating errors and venturing into unrepresented areas of the state space. Given that the dataset is full of state data, we can then randomly sample the initial image from the dataset, and then perform rollouts on each image. This is graphically represented as (dotted lines represent learning signal from reward function):
+Once the world model is suitably learned, it can then be used to train the reinforcement learning agent. This is much more efficient because now, the state of the world is encoded in a compressed form, and performing computations on this compressed state representation accelerates learning by allowing training to be done in very large batch sizes. To train, we simply encode a state $s_i$ at a time $t$ using the encoder, and then use the RSSM to perform rollouts given actions from the actor critic model. These rollouts can be performed in the field of ~5 seconds to prevent the RSSM from accumulating errors and venturing into unrepresented areas of the state space. Given that the dataset is full of state data, we can then randomly sample the initial image from the dataset, and then perform rollouts on each image. This is graphically represented as (dotted lines represent learning signal from reward function):
 
 ![AC learning](AC%20learning.png)
 
