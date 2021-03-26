@@ -174,9 +174,9 @@ There exist several methods of solving this problem, the popular and successful 
 - [What matters in on policy learning? A large scale empirical study](https://arxiv.org/abs/2006.05990)
 - [Generalized Advantage Estimation](https://arxiv.org/abs/1506.02438)
 
-Optionally, read this [blog post](https://lilianweng.github.io/lil-log/2018/02/19/a-long-peek-into-reinforcement-learning.html) on reinforcement learning algorithms and[this excellent blog](https://lilianweng.github.io/lil-log/2018/04/08/policy-gradient-algorithms.html) post on all current SOTA reinforcement learning algorithms for on policy learning.
+Optionally, read this [blog post](https://lilianweng.github.io/lil-log/2018/02/19/a-long-peek-into-reinforcement-learning.html) on reinforcement learning algorithms and [this excellent blog](https://lilianweng.github.io/lil-log/2018/04/08/policy-gradient-algorithms.html) post on all current SOTA reinforcement learning algorithms for on policy learning.
 
-In short, the actor critic model requires a distribution approximator and a functional approximator, both in the form of neural netowrks:
+In short, the actor critic model requires an action value distribution approximator and a value function approximator, both in the form of neural netowrks:
 
 $$
   \hat{a}_i \sim \pi_{a, \theta}(\bullet | z_i) \\
