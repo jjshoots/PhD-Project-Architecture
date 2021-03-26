@@ -193,7 +193,7 @@ figcaption {
 <hr>
 <h2 id="maintenance-detection-model">Maintenance Detection Model</h2>
 <p>There are two core purposes of the computer vision model. The first is to predict any and all <a href="#maintenance-requirements">maintenance requirements</a>, as part of the task at hand. The second is to provide part of the <a href="#reward-signal-formulation">reward signal</a> to the performance of the flight in the form of a <a href="#quality-estimator">quality estimate</a>. The core architecture of the maintenance detection model should then resemble the following model:</p>
-<p><img src="file:///c:\Users\taij\OneDrive - Coventry University\PhD Project Jet Tai\PhD Plans\Project Architecture\Maintenance%20Model.png" alt="Maintenance Model"></p>
+<p><img src="Maintenance%20Model.png" alt="Maintenance Model"></p>
 <h3 id="maintenance-requirements">Maintenance Requirements</h3>
 <p>Some of the maintenance requirements taken from literature include the following:</p>
 <ul>
@@ -245,7 +245,7 @@ figcaption {
 <hr>
 <h2 id="state-encoder-se">State Encoder (SE)</h2>
 <p>When performing conventional path planning on drones, typically, the flow of information can be represented by the following model:</p>
-<p><img src="file:///c:\Users\taij\OneDrive - Coventry University\PhD Project Jet Tai\PhD Plans\Project Architecture\State%20Estimation%20and%20Control.png" alt="Conventional Estimation and Control"></p>
+<p><img src="State%20Estimation%20and%20Control.png" alt="Conventional Estimation and Control"></p>
 <p>This presents several challenges in design:</p>
 <ul>
 <li>How do we represent the state of the the entire system? Global position, obstacles, world features, track position, etc...</li>
@@ -334,14 +334,14 @@ figcaption {
 <p>After these two are done, the system is decomposed to its core components, and a subset of them are used during <a href="#deployment">deployment</a>.</p>
 <h3 id="model-learning">Model Learning</h3>
 <p>In this stage of learning, we first train the SE using the dataset. Training to completion may not be too beneficial, but this remains to be seen. Regardless, some pre-training is required to allow the RSSM to have reasonable latent space variables to regress to, which is done right after the SE is trained/half-trained. A figure depicting this step of the training regime is shown here:</p>
-<p><img src="file:///c:\Users\taij\OneDrive - Coventry University\PhD Project Jet Tai\PhD Plans\Project Architecture\RSSM%20SE%20training.png" alt="RSSM SE training"></p>
+<p><img src="RSSM%20SE%20training.png" alt="RSSM SE training"></p>
 <hr>
 <h3 id="agent-learning">Agent Learning</h3>
 <p>Once the world model is suitably learned, it can then be used to train the reinforcement learning agent. This is much more efficient because now, the state of the world is encoded in a compressed form, and performing computations on this compressed state representation accelerates <strong>learning</strong> by allowing training to be done in very large batch sizes. To train, we simply encode a state <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>s</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">s_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.58056em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault">s</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></eq> at a time <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi></mrow><annotation encoding="application/x-tex">t</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.61508em;vertical-align:0em;"></span><span class="mord mathdefault">t</span></span></span></span></eq> using the encoder, and then use the RSSM to perform rollouts given actions from the actor critic model. These rollouts can be performed in the field of 5 seconds to prevent the RSSM from accumulating errors and venturing into unrepresented areas of the state space. Given that the dataset is full of state data, we can then randomly sample the initial image from the dataset, and then perform rollouts on each image. This is graphically represented as:</p>
-<p><img src="file:///c:\Users\taij\OneDrive - Coventry University\PhD Project Jet Tai\PhD Plans\Project Architecture\AC%20learning.png" alt="AC learning"></p>
+<p><img src="AC%20learning.png" alt="AC learning"></p>
 <blockquote>
 <p>Optionally, to accelerate learning, we can also use mimic learning via supervised learning to first learn a good set of actions to take given states from the dataset. Once this is learned sufficiently well, reinforcement learning can be used to fine tune the actor to take more optimal actions. This is shown as:</p>
-<p><img src="file:///c:\Users\taij\OneDrive - Coventry University\PhD Project Jet Tai\PhD Plans\Project Architecture\AC%20prelearning.png" alt="AC prelearning \label{prelearning}"></p>
+<p><img src="AC%20prelearning.png" alt="AC prelearning \label{prelearning}"></p>
 </blockquote>
 <h3 id="deployment">Deployment</h3>
 <p>Finally, in deployment, we discard everything but the most essential. Effectively, we replicate the operation shown in the prior image, but this time, actions are directly taken onto the world state instead. The RSSM and decoder are not used.</p>
