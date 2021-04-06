@@ -1,31 +1,31 @@
 # Project Architecture - Reinforcement Learning in an Imagined Latent State
 
 <!-- TOC -->
-- [Prior Setup](#prior-setup)
-  - [Initial Data Collection](#initial-data-collection)
-  - [Reward Signal formulation](#reward-signal-formulation)
-  - [Dataset Construction/Consolidation](#dataset-constructionconsolidation)
-- [Maintenance Detection Model](#maintenance-detection-model)
-  - [Maintenance Requirements](#maintenance-requirements)
-  - [Detection Model](#detection-model)
-  - [Quality Estimator](#quality-estimator)
-- [State Encoder (SE)](#state-encoder-se)
-  - [Sim to Real Adaptation](#sim-to-real-adaptation)
-- [Recurrent State Space Model (RSSM)](#recurrent-state-space-model-rssm)
-- [Reinforcement Learning Model (Actor Critic / AC)](#reinforcement-learning-model-actor-critic--ac)
-- [Putting Everything Together](#putting-everything-together)
-  - [Model Learning](#model-learning)
-  - [Agent Learning](#agent-learning)
-  - [Deployment](#deployment)
-  - [Active Learning](#active-learning)
+- [1. Prior Setup](#1-prior-setup)
+  - [1.1. Initial Data Collection](#11-initial-data-collection)
+  - [1.2. Reward Signal formulation](#12-reward-signal-formulation)
+  - [1.3. Dataset Construction/Consolidation](#13-dataset-constructionconsolidation)
+- [2. Maintenance Detection Model](#2-maintenance-detection-model)
+  - [2.1. Maintenance Requirements](#21-maintenance-requirements)
+  - [2.2. Detection Model](#22-detection-model)
+  - [2.3. Quality Estimator](#23-quality-estimator)
+- [3. State Encoder (SE)](#3-state-encoder-se)
+  - [3.1. Sim to Real Adaptation](#31-sim-to-real-adaptation)
+- [4. Recurrent State Space Model (RSSM)](#4-recurrent-state-space-model-rssm)
+- [5. Reinforcement Learning Model (Actor Critic / AC)](#5-reinforcement-learning-model-actor-critic--ac)
+- [6. Putting Everything Together](#6-putting-everything-together)
+  - [6.1. Model Learning](#61-model-learning)
+  - [6.2. Agent Learning](#62-agent-learning)
+  - [6.3. Deployment](#63-deployment)
+  - [6.4. Active Learning](#64-active-learning)
 <!-- TOC -->
 
 <hr>
 
-## Prior Setup
+## 1. Prior Setup
 Several assumptions are needed for this system to work.
 
-### Initial Data Collection
+### 1.1. Initial Data Collection
 As with any deep learning task, we require data. To obtain this data, ideally, the drone is initialy operated by a human operator in the intended environment. The data that is to be collected comes from a range of sensors, the most important ones are:
   - Perceptual cameras
     - cameras that allow the drone a 3D perception of the world
@@ -44,7 +44,7 @@ As with any deep learning task, we require data. To obtain this data, ideally, t
   - Maintenance camera footage
     - $M = \{m_1, m_2, ..., m_T\} \in \mathbb{R}^{p_1 \times p_2}$
 
-### Reward Signal formulation
+### 1.2. Reward Signal formulation
 Because a majority of the system is based on reinforcement learning, there needs to be a reward signal. We formulate the reward signal at every time step $i$ according to:
 
 $$
@@ -55,7 +55,7 @@ where $\hat{q}_{image, i}$ denotes the [perceived image quality](#quality-estima
 - Reward signals
   - $R = \{r_1, r_2, ..., r_T\} \in \mathbb{R}$
 
-### Dataset Construction/Consolidation
+### 1.3. Dataset Construction/Consolidation
 The training dataset will then consist of the three classical requirements for reinforcement learning
 - State
   - $S = \{s_1, s_2, ..., s_T\}$
@@ -70,14 +70,14 @@ The training dataset will then consist of the three classical requirements for r
 
 <hr>
 
-## Maintenance Detection Model
+## 2. Maintenance Detection Model
 There are two core purposes of the computer vision model. The first is to predict any and all [maintenance requirements](#maintenance-requirements), as part of the task at hand. The second is to provide part of the [reward signal](#reward-signal-formulation) to the performance of the flight in the form of a [quality estimate](#quality-estimator). The core architecture of the maintenance detection model should then resemble the following model:
 
 ![Maintenance Model](Maintenance%20Model.png)
 
 > Correction: In the above image, the outputs from the network are flipped; detections should be above, and $\hat{q}$ should be below.
 
-### Maintenance Requirements
+### 2.1. Maintenance Requirements
 Some of the maintenance requirements taken from literature include the following:
 - **Railway**
     - Missing fasteners
@@ -99,7 +99,7 @@ Some of the maintenance requirements taken from literature include the following
 
 > Classically, detection of maintenance on rails requires laser scanners for rail deflection. Road maintenance tools classically include lidar, ultrasonic measurement, and IR measurements. For this reason, the maintenance issues are generally limited to a subset of existing maintenance issues because a more sophisticated suite of sensors are needed (this restriction is mostly in the rail, in addition, using these sensors on a flying drone is virtually impossible because they measure defects in the order of 1-10 mm, the height deviation from mere hovering will demolish this precision).
 
-### Detection Model
+### 2.2. Detection Model
 The detection model should not be hard to develop, seeing as computer vision with a given dataset is, in this day and age, a trivial task to solve.
 
 Some good brush-up papers are:
@@ -109,14 +109,14 @@ Some good brush-up papers are:
 
 This part of the system should not be a concern.
 
-### Quality Estimator
+### 2.3. Quality Estimator
 When performing detection/segmentation on the images, it is not possible for all the images to be well represented in the training dataset. To detect less-than-ideal images during deployment, we append an auxialliary branch to the computer vision model that predicts a quality metric, $\hat{q}_{image}$.
 
 Training this branch is easy: after the main branch of the model is trained, we add less-than-ideal images to the base image dataset $M$ and freeze the detection branch. Then, make the auxilliary branch predict the error in detection between the ideal case and the non-ideal case.
 
 <hr>
 
-## State Encoder (SE)
+## 3. State Encoder (SE)
 When performing conventional path planning on drones, typically, the flow of information can be represented by the following model:
 
 ![Conventional Estimation and Control](State%20Estimation%20and%20Control.png)
@@ -146,7 +146,7 @@ As can be seen, simply summing all the data at a sufficient scale is enough to e
 
 > Optionally, to enforce a _meaningful_ representation of the state $s$ in $z$, we can train the SE to output segmentation masks generated by an off-the-shelf semantic segmentation model. This way, things like tree colour, sky colour, etc, are not represented in the latent variable $z$.
 
-### Sim to Real Adaptation
+### 3.1. Sim to Real Adaptation
 ```
 This section is inspired and well brought up by Dr. Mauro.
 ```
@@ -169,7 +169,7 @@ Another more radical approach to this problem is meta-reinforcement learning, of
 
 <hr>
 
-## Recurrent State Space Model (RSSM)
+## 4. Recurrent State Space Model (RSSM)
 Online reinforcement learning is not data efficient. Many attributes cause this, most notable the sparsity of rewards and the exploration issue with learning from existing data. To circumvent this, many model-based reinforcement learning architectures have been proposed, where a world model is learned via supervised learning, and then reinforcement learning is done using this world model. This is the exact approach used here, except with latent space variables.
 
 
@@ -179,7 +179,7 @@ The RSSM's main goal is to predict the next state and reward given the current s
 
 <hr>
 
-## Reinforcement Learning Model (Actor Critic / AC)
+## 5. Reinforcement Learning Model (Actor Critic / AC)
 The AC model will arguably be the most touchy component of the whole system architecture, but its core concept is the easiest to understand. The base idea is to have the actor produce a distribution over the action space of the most likely action that will maximize the expected sum of future discounted rewards. Ie:
 
 $$
@@ -209,7 +209,7 @@ $$
 
 <hr>
 
-## Putting Everything Together
+## 6. Putting Everything Together
 Thus far, we have:
 - [The State Encoder (and decoder)](#state-encoder-se)
   - $z \sim p_{e, \theta} (\bullet | s)$
@@ -230,13 +230,13 @@ There are two main regimes for the training of this system.
 
 After these two are done, the system is decomposed to its core components, and a subset of them are used during [deployment](#deployment).
 
-### Model Learning
+### 6.1. Model Learning
 In this stage of learning, we first train the SE using the dataset. Training to completion may not be too beneficial, but this remains to be seen. Regardless, some pre-training is required to allow the RSSM to have reasonable latent space variables to regress to, which is done right after the SE is trained/half-trained. A figure depicting this step of the training regime is shown here (dotted lines represent KL loss, or a loss function between two distributions):
 
 ![RSSM SE training](RSSM%20SE%20training.png)
 ****
 
-### Agent Learning
+### 6.2. Agent Learning
 Once the world model is suitably learned, it can then be used to train the reinforcement learning agent. This is much more efficient because now, the state of the world is encoded in a compressed form, and performing computations on this compressed state representation accelerates learning by allowing training to be done in very large batch sizes. To train, we simply encode a state $s_i$ at a time $t$ using the encoder, and then use the RSSM to perform rollouts given actions from the actor critic model. These rollouts can be performed in the field of ~5 seconds to prevent the RSSM from accumulating errors and venturing into unrepresented areas of the state space. Given that the dataset is full of state data, we can then randomly sample the initial image from the dataset, and then perform rollouts on each image. This is graphically represented as (dotted lines represent learning signal from reward function):
 
 ![AC learning](AC%20learning.png)
@@ -244,13 +244,15 @@ Once the world model is suitably learned, it can then be used to train the reinf
 > Optionally, to accelerate learning, we can also use mimic learning via supervised learning to first learn a good set of actions to take given states from the dataset. Once this is learned sufficiently well, reinforcement learning can be used to fine tune the actor to take more optimal actions. This is shown as:
 >
 > ![AC prelearning \label{prelearning}](AC%20prelearning.png)
+>
+> Initially this seemed like a good idea, but just blind supervised learning actually doesn't produce very good results. More optimal methods of mimic learning include [Inverse Reinforcement Learning](https://www.aaai.org/Papers/AAAI/2008/AAAI08-227.pdf?source=post_page---------------------------). But in the name of Keep It Simple Stupid (KISS), I think this will likely not be implemented to prevent adding one more complication.
 
-### Deployment
+### 6.3. Deployment
 Finally, in deployment, we discard everything but the most essential. Effectively, we replicate the operation shown in the prior image, but this time, actions are directly taken onto the world state instead. The RSSM and decoder are not used.
 
 Ideally, the system should be trained in a recurring fashion, that is, after training on the initial dataset, the system should be allowed to interact with the environment on its own and collect additional data to be added to the dataset, and then retrained on this additional data. This should be done for several episodes until an optimum level of performance is achieved.
 
-### Active Learning
+### 6.4. Active Learning
 During complete deployment, there is an option to perform active learning with the system. Because the computer vision model conveniently outputs a measure of performance, we can use this metric to detect instances where the model is having trouble with its task. These instances can then be collected, and the network explicitly trained on these scenarios after the fact. This is known as hard negative mining.
 
 
