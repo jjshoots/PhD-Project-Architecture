@@ -48,7 +48,7 @@ As with any deep learning task, we require data. To obtain this data, ideally, t
 Because a majority of the system is based on reinforcement learning, there needs to be a reward signal. We formulate the reward signal at every time step $i$ according to:
 
 $$
-  r_i = f(\hat{q}_{image, i}, q_i, )
+  r_i = f(\hat{q}_{image, i}, q_i, ...)
 $$
 
 where $\hat{q}_{image, i}$ denotes the [perceived image quality](#quality-estimator) of the [maintenance detection model](#maintenance-detection-model). This allows the attainment of a new set of data, known here as the reward signal.
@@ -154,7 +154,7 @@ The idea of learning from simulation before application to the real world is act
 
 One solution to this problem is using a Cycle-GAN to perform domain adaptation. Given system states from a target domain characterized by $S^{(t)} \in M_t$ where $M_t$ described a target domain (the real world), and system states from the source domain characterized by $S^{(s)} \in M_s$, we design a [Cycle-GAN](https://arxiv.org/abs/1703.10593) that first performs an image transformation $f_{s2r} : S^{(s)} \rightarrow S^{(r)*}$ and another Cycle-GAN that reverses the transformation $f_{r2s} : S^{(r)} \rightarrow S^{(s)*}$.
 
-> Note that s2r means sim2real, while r2s means real2sim. In addition, states with a single superscript $*$ denote states after one transformation, and those with two $**$ denote states after two transformations. A transformation $*$ has to be from the opposing domain, and not from the same domain. Simply put, the inverse of a specific transformation $f^{-1}_{r2s} : S^{(r)*} \rightarrow S^{(s)}$ must map from either $(s)$ to $(r)$ or vice versa.
+> Note that s2r means sim2real, while r2s means real2sim. In addition, states with a single superscript $*$ denote states after one transformation, and those with two $**$ denote states after two transformations. A transformation $*$ has to be from the opposing domain, and not from the same domain. Simply put, the inverse of a specific transformation $f^{-1}_{r2s} : S^{(r)} \rightarrow S^{(s)*}$ must map from either $(s)$ to $(r)$ or vice versa.
 
 After that is done, we simply optimize for the cycle loss $L_{cycle}(S^{(r)}, S^{(r)**})$ and $L_{cycle}(S^{(s)}, S^{(s)**})$. In addition, we can enforce that the compressed state representations taken from both sim and real representations $z^{(r)}$ and $z^{(s)*}$ are similar through an additional loss function. These ideas are inspired from:
 
