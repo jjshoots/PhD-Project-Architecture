@@ -33,7 +33,7 @@ Several assumptions are needed for this system to work.
 ****
 
 ### 1.1. Initial Data Collection
-As with any deep learning task, we require data. To obtain this data, ideally, the drone is initialy operated by a human operator in the intended environment. The data that is to be collected comes from a range of sensors, the most important ones are:
+As with any deep learning task, we require data. To obtain this data, ideally, the drone is initially operated by a human operator in the intended environment. But, this is not an ideal world, and it is unlikely that we will gather the required amount of real world data to make this work (reinforcement learning is notorioiusly data inefficient). This is addressed in the section on [sim2real](#31-sim-to-real-adaptation), the following can then be data gathered from the simulation environment. The data that is to be collected comes from a range of sensors, the most important ones are:
   - Perceptual cameras
     - cameras that allow the drone a 3D perception of the world
   - Sensing camera
