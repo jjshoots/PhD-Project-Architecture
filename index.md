@@ -147,23 +147,28 @@ This presents several challenges in design:
 
 Admittedly, while an architecture where everything is deterministic and has an explicit formulation is possible, it is not entirely scalable from one scenario to the next. In addition, the phd title has 'AI-enabled drones' in it, may as well take that notion to the extreme...
 
-The core idea of the state encoder is to allow the drone to represent the system state, $s \in S$ in the form of a hidden latent variable, $z \in Z \sim p_{e, \theta}(z|s)$. Hidden here implies that the meaning of this variable is non-human-interpretable. Note that this is a stochastic distribution. We denote with the vector $\theta$ distributions that are parameterized by a neural network.
+The core idea of the state encoder is to allow the drone to represent the system state, $s \in S$ in the form of a latent variable, $z \sim p_{e, \theta}(\bullet|s)$. Latent here implies that the meaning of this variable is non-human-interpretable. Note that this is a stochastic distribution. The subscript $e$ indicates that this distribution is sampled from an encoder network, while the subscript $\theta$ denotes distributions that are parameterized by a neural network.
 
 The purpose of this is to reduce the very high-dimensional state information $s \in S$ into a much lower dimensional latent space $z \in Z$, where $\dim(s) \approx 10e6$ and $\dim(z) \approx 10e2$. This is necessary because current reinforcement learning algorithms do not function well with very high dimensional data, so this reduction of data dimension is necessary. In the [future](#putting-everything-together), we also see that this allows a dramatic speed-up in training by allowing the neural network to perform training in many more batches than when training with raw states $s$.
 
-To achieve this meaningful encoding of the system state, a modified [variational auto encoder](https://arxiv.org/abs/1312.6114) can be used. The paper in the link is rather dated, but should give a good representation of what is planned to be achieved. In short, we represent the latent variable according to $z \in Z \sim p_{e, \theta}(z|s)$, and then have another distribution reproduce $\hat{s} \in \hat{S} \sim p_{d, \theta}(\hat{s}|z)$. We then regress $\hat{s}$ onto $s$ through standard back propogation. To enforce closeness in the space of $Z$ (to prevent overfitting), an additional distribution loss of $L_{KL} = KL(p(Z)||p(\bar{Z}))$ can be added, where $\bar{Z}$ is some prior, predefined distribution, usually chosen as a Gaussian ball with unit variance. The $KL$ term simply denotes the Kullback-Leibler divergence, which is a measure of distances between distributions. The formulation classically used is:
+To achieve this meaningful encoding of the system state, a modified [variational auto encoder](https://arxiv.org/abs/1312.6114) can be used. The paper in the link is rather dated, but should give a good representation of what is planned to be achieved. In short, we represent the latent variable according to $z \sim p_{e, \theta}(\bullet|s)$, and then have another distribution reproduce $\hat{s} \sim p_{d, \theta}(\hat{s}|z)$. We then regress $\hat{s}$ onto $s$ through standard back propogation. To enforce closeness in the space of $Z$ (to prevent overfitting), a modified evidence lower bound (ELBO) objective with an additional distribution loss of $L_{KL} = KL(p(Z)||p(\bar{Z}))$ can be added, where $\bar{Z}$ is some prior, predefined distribution, usually chosen as a Gaussian ball with unit variance. The $KL$ term simply denotes the Kullback-Leibler divergence, which is a measure of distances between distributions. The formulation classically used is:
 
 $$
   L_{KL} = KL(p(Z)||p(\bar{Z})) \\
   L_{KL} = \mathbb{E}_Z [log(\frac{p_{e, \theta}(z|s)}{p(\bar{z})})] \\
-  L_{KL} = \frac{1}{T}\sum_i^T[log(p_{e, \theta}(z_i|s)) - log(p(\bar{z}_i))]
+  L_{KL} = \frac{1}{N}\sum_i^N[log(p_{e, \theta}(z_i|s)) - log(p(\bar{z}_i))]
 $$
 
-> Note that the distribution of $z$ is stochastic, that is, the neural network outputs a distribution, and then the latent variable $z$ is sampled from this distribution via the [reparameterization trick](https://arxiv.org/abs/1312.6114). It is therefore convenient to represent the distributions as simple Gaussians.
+> Note that the distribution of $z$ is stochastic, that is, the neural network outputs a distribution, and then the latent variable $z$ is sampled from this distribution via the [reparameterization trick](https://arxiv.org/abs/1312.6114) or [straight through gradient estimators](https://arxiv.org/abs/1308.3432) to maintain gradient information through a stochastic step. It is convenient to represent the distributions as simple Gaussians.
 
-As can be seen, simply summing all the data at a sufficient scale is enough to enforce this constraint. Unfortunately, doing this can be disadvantageous by forcing the network to place all the state representations very closely within the latent space, potentially losing out on representational capacity. To circumvent this, I propose that we simply replace $\bar{z} = z_{i-1}$ (some notation change in the expectation is needed, but this is fairly trivial to do and the end result is the same). The intuition is that this enforces adjacent states $s$ (which are by definition very close to each other being only one time step away from each other) to be represented closely in latent space, but states that are very far away (for example $s_3$ and $s_{100}$) can be placed very far apart in latent space. By intuition, in the limit, all the latent space variables will eventually be a coherent mass, but this still requires mathematical proof.
+As can be seen, simply summing all the data at a sufficient scale is enough to enforce this constraint. Unfortunately, doing this can be disadvantageous by forcing the network to place all the state representations very closely within the latent space, potentially losing out on representational capacity. To circumvent this, I propose that we simply replace $\bar{z} = z_{i-1}$ (some notation change in the expectation is needed, but this is fairly trivial to do and the end result is the same). The intuition is that this enforces adjacent states $s$ (which are by definition very close to each other being only one time step away from each other) to be represented closely in latent space, but states that are very far away (for example $s_3$ and $s_{100}$) can be placed very far apart in latent space. By intuition, in the limit, all the latent space variables will eventually be a coherent mass.
+
+> It has been discovered that a spin on the above idea has been used in [Position Velocity Encoders](https://arxiv.org/pdf/1705.09805.pdf). It's not exactly the same thing, but the intuition is similar.
 
 > Optionally, to enforce a _meaningful_ representation of the state $s$ in $z$, we can train the SE to output segmentation masks generated by an off-the-shelf semantic segmentation model. This way, things like tree colour, sky colour, etc, are not represented in the latent variable $z$.
+
+Helpful papers:
+- [Posterior Collapse in VAEs](http://proceedings.mlr.press/v119/dai20c/dai20c.pdf)
 
 ****
 
@@ -201,7 +206,7 @@ Online reinforcement learning is not data efficient. Many attributes cause this,
 
 > We denote the latent state space variable here as $z \in Z$, but note that there are two possible formulations for this latent space variable. The first is as described in the [state encoder](#state-encoder), but an alternate, more sensible approach, is to have $s \in S$ be solely derived from $X$, and then concatenate $q \in Q$ into $z$. That way, the state encoder is only used to encode the perceptual camera information, and the sensor measurements taken by the IMU (or optionally filtered and estimated position, velocity, etc) be kept as a separate variable, simply concatenated to the latent variable. For brevity, I will just refer to this variable as a latent state variable $z \in Z$.
 
-The RSSM's main goal is to predict the next state and reward given the current state and action pair, where the states are represented as latent state variables. If we assume that the whole process is first-order Markovian (as in a fully observable MDP), then it is sufficient for the neural networok to be a normal feedforward network. However, most of the time, such complex systems are partially observable, thus the Markovian nature is very difficult to be enforced. For this reason, it is likely that a recurrent model should be used for the RSSM instead, in the form of a GRU, LSTM, simple RNN, or optionally a Transformer. Thus, we introduce a recurrent variable here as $h$. The RSSM is then described by $(z_i, r_i) \sim f_{\theta}(z_{i-1}, a_{i-1}, h_{i-1})$. Note that this process is deterministic. The recurrent varialble can then be a distribution of several things; $h_i \sim  g(\bullet | z_i, h_{i-1}, ...)$, note that this is not a neural network process, but a fixed stochastic operation.
+The RSSM's main goal is to predict the next state and reward given the current state and action pair, where the states are represented as latent state variables. If we assume that the whole process is first-order Markovian (as in a fully observable MDP), then it is sufficient for the neural networok to be a normal feedforward network. However, most of the time, such complex systems are partially observable, thus the Markovian nature is very difficult to be enforced. For this reason, it is likely that a recurrent model should be used for the RSSM instead, in the form of a GRU, LSTM, simple RNN, or optionally a Transformer. Thus, we introduce a recurrent variable here as $h$. The RSSM is then described by $(z_i, r_i) \sim f_{\theta}(z_{i-1}, a_{i-1}, h_{i-1})$. Note that this process is also stochastic. The recurrent variable can then be a distribution of several things; $h_i \sim  g(\bullet | z_i, h_{i-1}, ...)$.
 
 ****
 ****
@@ -231,7 +236,7 @@ In short, the actor critic model requires an action value distribution approxima
 
 $$
   \hat{a}_i \sim \pi_{a, \theta}(\bullet | z_i) \\
-  \hat{V}_i = \pi_{v, \theta}(z_i)
+  \hat{V}_i \sim \pi_{v, \theta}(\bullet | z_i, a_i)
 $$
 
 
@@ -244,9 +249,9 @@ Thus far, we have:
   - $z \sim p_{e, \theta} (\bullet | s)$
   - $\hat{s} \sim p_{d, \theta} (\bullet | z)$
 - [The Recurrent State Space Model](#recurrent-state-space-model-rssm)
-  -  $(z_i, r_i) = f_{\theta}(z_{i-1}, a_{i-1}, h_{i-1})$
+  -  $(z_i, r_i) \sim f_{\theta}(\bullet | z_{i-1}, a_{i-1}, h_{i-1})$
 -  [Actor Critic Model](#reinforcement-learning-model-actor-critic--ac)
-   - $\hat{V}_i = \pi_{v, \theta}(z_i)$
+   - $\hat{V}_i \sim \pi_{v, \theta}(\bullet | z_i, a_i)$
    - $\hat{a}_i \sim \pi_{a, \theta}(\bullet | z_i)$
 
 To preface, the base idea is to train the AC model on the imagined latent states generated by the RSSM, rolled out for $n$ steps into the future at a time.
@@ -266,6 +271,8 @@ In this stage of learning, we first train the SE using the dataset. Training to 
 
 ![RSSM SE training](RSSM%20SE%20training.png)
 
+> Note the sampling operations in the figure. In these instances, the networks outputs a parameterized distribution (most likely a Gaussian), from which the variable is sampled from before being passed on. In reality, there will likely be an ensemble of RSSMs, each with different initializations. This allows the AC to perform reinforcement learning on an ensemble of trajectories, promoting robustness.
+
 ****
 
 ### 6.2. Agent Learning
@@ -284,7 +291,7 @@ Once the world model is suitably learned, it can then be used to train the reinf
 ### 6.3. Deployment
 Finally, in deployment, we discard everything but the most essential. Effectively, we replicate the operation shown in the prior image, but this time, actions are directly taken onto the world state instead. The RSSM and decoder are not used.
 
-Ideally, the system should be trained in a recurring fashion, that is, after training on the initial dataset, the system should be allowed to interact with the environment on its own and collect additional data to be added to the dataset, and then retrained on this additional data. This should be done for several episodes until an optimum level of performance is achieved.
+Ideally, the system should be trained in a recurring fashion, that is, after training on the initial dataset, the system should be allowed to interact with the environment on its own and collect additional data to be added to the dataset, and then retrained on this additional data. This should be done for several episodes until an optimum level of performance is achieved. This form of learning is known as synchronous learning as in the case of A2C. A more powerful method of learning would entail learning in an [asynchronous fashion](https://arxiv.org/pdf/1602.01783.pdf). In this case, the network is deployed into the environment and trajectories are collected. This data is used to train the SE and RSSM, which is in turn used to train the actor critic, which is then used to collect more trajectories. This happens episodically with the actor critic continuously using the latest version of itself.
 
 ****
 
