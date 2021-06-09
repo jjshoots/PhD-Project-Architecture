@@ -169,6 +169,7 @@ As can be seen, simply summing all the data at a sufficient scale is enough to e
 
 Helpful papers:
 - [Posterior Collapse in VAEs](http://proceedings.mlr.press/v119/dai20c/dai20c.pdf)
+- [VAEs and Disentanglement](http://jck.bio/disentangling_a_latent_space/)
 
 ****
 
